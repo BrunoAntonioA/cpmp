@@ -391,6 +391,8 @@ def normalize_array(array):
 # c cantidad de columnas de las instancias a generar
 # f cantidad de filas de las instancias a generar
 # ds cantidad de filas superiores en blanco que se desean sobreponer
+
+
 def generate_data_set(n1, n2, c, f, ds):
     d = open("data/states/train.txt", "a")
     l = open("data/states/trainlabel.txt", "a")
@@ -407,10 +409,16 @@ def generate_data_set(n1, n2, c, f, ds):
             y = z[0]
             inputs.append(y)
             outputs.append(z[1])
+    cont = 0
     for x in inputs:
-        for y in range(len(x)):
-            d.write(str(x[y]))
+        for z in x:
+            if cont == 0:
+                cont = cont + 1
+            else:
+                d.write(".")
+            d.write(str(z))
         d.write(",")
+        cont = 0
     for x in outputs:
         l.write(str(x))
         l.write(",")
@@ -432,13 +440,16 @@ def generate_data_set(n1, n2, c, f, ds):
             y = z[0]
             inputs.append(y)
             outputs.append(z[1])
+    cont = 0
     for x in inputs:
         for z in x:
-            d.write("-")
+            if cont == 0:
+                cont = cont + 1
+            else:
+                d.write(".")
             d.write(str(z))
-        #for y in range(len(x)):
-        #    d.write(str(x[y]))
         d.write(",")
+        cont = 0
     for x in outputs:
         l.write(str(x))
         l.write(",")
@@ -446,12 +457,24 @@ def generate_data_set(n1, n2, c, f, ds):
     l.close()
 
 
-generate_data_set(10, 10, 3, 3, 1)
+"""
+    El formato de guardado de los estados es el siguiente:
+        Entre cada '.' se encuentra una posicion de un estado. 
+            Ejemplo: .4.3.23.1.-1, Representan el array [4, 3, 23, 1, -1]
+        Entre cada ',' se encuentra un estado.
+            Ejemplo: 4.3.23.1.-1,5.24.3.1.10, 
+            Representan los array [4, 3, 23, 1, -1], [5, 24, 3, 1, 10]
+    Esta es la manera en que son leidos los datos en el archivo "data.py"
+"""
+"""
+    El orden en que se generan los datos es:
+        [0, n[ El estado del problema, es decir la matriz de los container, en forma de arreglo; Sea n = c * f.
+        [n, n+c[ Group value del estado.
+        [n+c, n+(c*2)[ Diferencia de las bases de los container con el mayor de todos los container.
+        [n+(c*2), n+(c*3)[ Diferencia de los topes de las columnas con el mayor de todos los container.
+        [n+(c*3), n+(c*4)[ Cantidad de pilas necesarias para ordenar los elementos en una columna de containers.
+        [n+(C*4] Movimiento con el que se llego a ese estado, en el caso de ser el estado inicial el valor es de -1.
 
-'''
-    El vector generado tiene el siguiente formato:
-    [0-N] El estado generado transformado en un array, donde N = (Filas * Columnas) - 1
-    [N-N+Columnas-1] Por cada posicion de este rango, es la cantidad de container desordenados de su correspondiente columna
-     
+"""
 
-'''
+generate_data_set(5, 5, 4, 4, 2)

@@ -1,63 +1,59 @@
 import numpy as np
 
 
-def import_train_data():
-    train = open("states/test.txt", "r")
-    labels = open("states/testlabel.txt", "r")
+def import_data(path, path2):
+    train = open(path, "r")
+    labels = open(path2, "r")
     train_data = train.read()
     labels_data = labels.read()
     inputs = []
     outputs = []
-    state = np.array([])
-    aux = np.array([])
+    pos = ""
+    sta = np.array([])
     for i in train_data:
-        if i != '-' and i != ',':
-            aux = np.append(aux, int(i))
+        if i != '.' and i != ',':
+            pos = pos + str(i)
             continue
-        if i == '-':
-            helper = 0
-            for x in aux:
-                helper = helper * 10 + x
-            state = np.append(state, helper)
-            aux = np.array([])
+        if i == '.':
+            sta = np.append(sta, pos)
+            pos = ""
             continue
         if i == ',':
-            inputs.append(state.astype(int))
-            print("state: ", state)
-            state = np.array([])
+            sta = np.append(sta, pos)
+            pos = ""
+            inputs.append(sta)
+            sta = []
             continue
-        state = np.append(state, int(i))
-
+    pos = ""
     for i in labels_data:
         if i == ',':
+            outputs.append(pos)
+            pos = ""
             continue
-        outputs.append(int(i))
+        pos = pos + i
     train.close()
     labels.close()
     return inputs, outputs
 
 
-def import_test_data():
-    train = open("data/states/test.txt", "r")
-    labels = open("data/states/testlabel.txt", "r")
-    train_data = train.read()
-    labels_data = labels.read()
-    inputs = []
-    outputs = []
-    state = []
-    for i in train_data:
+def filter_data(data, c, opt):
+    data = np.array(data)
+    print("data.shape: ", data.shape)
 
-        if i == ',':
-            inputs.append(np.asarray(state))
-            state = []
-            continue
-        state.append(int(i))
+    for x in range(len(opt)):
+        if x == 0 and opt[x] == "1":
+            print("group value")
+        if x == 1 and opt[x] == "1":
+            print("base differences")
+        if x == 2 and opt[x] == "1":
+            print("top differences")
+        if x == 3 and opt[x] == "1":
+            print("necessaries stacks")
 
-    for i in labels_data:
-        if i == ',':
-            continue
-        outputs.append(int(i))
-    train.close()
-    labels.close()
-    return inputs, outputs
+path = "data/states/test.txt";
+path2 = "data/states/testlabel.txt";
+
+inputs, outputs = import_data(path, path2)
+
+filter_data(inputs, 5, "0000")
 

@@ -5,6 +5,7 @@ import os
 
 import tf as tf
 
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import data as dt
@@ -13,10 +14,13 @@ from tensorflow import keras
 
 import numpy as np
 
+path1 = "data/states/test.txt";
+path2 = "data/states/testlabel.txt";
+path3 = "data/states/train.txt";
+path4 = "data/states/trainlabel.txt";
 
-train_data, train_labels = dt.import_train_data()
-test_data, test_labels = dt.import_test_data()
-
+train_data, train_labels = dt.import_data(path3, path4)
+test_data, test_labels = dt.import_data(path1, path2)
 
 train_data = np.array(train_data)
 train_labels = np.array(train_labels)
@@ -25,7 +29,7 @@ test_labels = np.array(test_labels)
 
 
 clf = keras.Sequential([
-    keras.layers.Flatten(input_shape=(28,)),
+    keras.layers.Flatten(input_shape=(33,)),
     keras.layers.Dense(64, activation='relu'),
     keras.layers.Dense(128, activation='relu'),
     keras.layers.Dense(64, activation='relu'),
@@ -37,13 +41,15 @@ clf.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['
 checkpoint_path = "data/NN_weights/NN_normalize_gv/nn_16.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
+print("compiled succesfuly")
 
+"""
 print("train_data.shape: ", train_data.shape)
 print("train_data[1].shape: ", train_data[1].shape)
 print("train_labels.shape: ", train_labels.shape)
 print("test_data.shape: ", test_data.shape)
 print("test_labels.shape: ", test_labels.shape)
-
+"""
 
 # Create a callback that saves the model's weights
 cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
@@ -51,7 +57,8 @@ cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_wei
 log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-clf.fit(train_data, train_labels, epochs=150, callbacks=[cp_callback, tensorboard_callback], validation_data=(test_data, test_labels))
+clf.fit(train_data, train_labels, epochs=150, callbacks=[cp_callback, tensorboard_callback],
+        validation_data=(test_data, test_labels))
 
 print("test data")
 
