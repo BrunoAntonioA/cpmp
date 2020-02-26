@@ -27,9 +27,13 @@ train_labels = np.array(train_labels)
 test_data = np.array(test_data)
 test_labels = np.array(test_labels)
 
+opt = "0010"
+train_data, input_dim = dt.filter_data(train_data, 4, 4, opt)
+test_data, input_dim = dt.filter_data(test_data, 4, 4, opt)
 
+print("input_dim: ", input_dim)
 clf = keras.Sequential([
-    keras.layers.Flatten(input_shape=(33,)),
+    keras.layers.Flatten(input_shape=(input_dim,)),
     keras.layers.Dense(64, activation='relu'),
     keras.layers.Dense(128, activation='relu'),
     keras.layers.Dense(64, activation='relu'),

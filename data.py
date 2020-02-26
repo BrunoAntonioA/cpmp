@@ -36,24 +36,46 @@ def import_data(path, path2):
     return inputs, outputs
 
 
-def filter_data(data, c, opt):
+def filter_data(data, c, f, opt):
     data = np.array(data)
-    print("data.shape: ", data.shape)
+    transformed_data = []
 
-    for x in range(len(opt)):
-        if x == 0 and opt[x] == "1":
-            print("group value")
-        if x == 1 and opt[x] == "1":
-            print("base differences")
-        if x == 2 and opt[x] == "1":
-            print("top differences")
-        if x == 3 and opt[x] == "1":
-            print("necessaries stacks")
+    for dt in data:
+        new_data = np.array([])
+        state = np.split(dt, [0, c*f])
+        state = state[1]
+        new_data = np.append(new_data, state)
+        for x in range(len(opt)):
+            if x == 0 and opt[x] == "1":
+                initial_split_position = c * f
+                final_split_position = (c*f) + c
+                group_value = np.split(dt, [initial_split_position, final_split_position])
+                group_value = group_value[1]
+                new_data = np.append(new_data, group_value)
+            if x == 1 and opt[x] == "1":
+                initial_split_position = (c*f) + c
+                final_split_position = (c * f) + (2 * c)
+                base_differences = np.split(dt, [initial_split_position, final_split_position])
+                base_differences = base_differences[1]
+                new_data = np.append(new_data, base_differences)
+            if x == 2 and opt[x] == "1":
+                initial_split_position = (c * f) + (2 * c)
+                final_split_position = (c * f) + (3 * c)
+                top_differences = np.split(dt, [initial_split_position, final_split_position])
+                top_differences = top_differences[1]
+                new_data = np.append(new_data, top_differences)
+            if x == 3 and opt[x] == "1":
+                initial_split_position = (c * f) + (3 * c)
+                final_split_position = (c * f) + (4 * c)
+                necessaries_stacks = np.split(dt, [initial_split_position, final_split_position])
+                necessaries_stacks = necessaries_stacks[1]
+                new_data = np.append(new_data, necessaries_stacks)
+        last_move = dt[len(dt)-1]
+        new_data = np.append(new_data, last_move)
+        transformed_data.append(new_data)
 
-path = "data/states/test.txt";
-path2 = "data/states/testlabel.txt";
+    return np.array(transformed_data), transformed_data[0].shape[0]
 
-inputs, outputs = import_data(path, path2)
 
-filter_data(inputs, 5, "0000")
+
 
