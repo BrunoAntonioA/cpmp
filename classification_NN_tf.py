@@ -1,11 +1,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import datetime
 import os
 
-import tf as tf
-
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = ""
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import data as dt
@@ -14,6 +11,12 @@ from tensorflow import keras
 
 import numpy as np
 
+"""
+config = tf.compat.v1.ConfigProto(
+        device_count = {'GPU': 0}
+    )
+sess = tf.Session(config=config)
+"""
 path1 = "data/states/test.txt";
 path2 = "data/states/testlabel.txt";
 path3 = "data/states/train.txt";
@@ -32,6 +35,7 @@ train_data, input_dim = dt.filter_data(train_data, 4, 4, opt)
 test_data, input_dim = dt.filter_data(test_data, 4, 4, opt)
 
 print("input_dim: ", input_dim)
+
 clf = keras.Sequential([
     keras.layers.Flatten(input_shape=(input_dim,)),
     keras.layers.Dense(64, activation='relu'),
@@ -42,18 +46,12 @@ clf = keras.Sequential([
 
 clf.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
+
 checkpoint_path = "data/NN_weights/NN_normalize_gv/nn_16.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
 print("compiled succesfuly")
 
-"""
-print("train_data.shape: ", train_data.shape)
-print("train_data[1].shape: ", train_data[1].shape)
-print("train_labels.shape: ", train_labels.shape)
-print("test_data.shape: ", test_data.shape)
-print("test_labels.shape: ", test_labels.shape)
-"""
 
 # Create a callback that saves the model's weights
 cp_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)

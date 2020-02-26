@@ -279,7 +279,8 @@ class CPMP_Node(Node):
     # Genera el valor esperado por la red en base al movimiento que se debe realizar
     def generar_y(self):
         if self.parent is None:
-            return -1
+            n = len(self.data.container_array)
+            return ((n-1) * n) + 1
         tupla = self.steps[0]
         c1 = tupla[0]
         c2 = tupla[1]
@@ -473,7 +474,8 @@ def generate_data_set(n1, n2, c, f, ds):
         [n+c, n+(c*2)[ Diferencia de las bases de los container con el mayor de todos los container.
         [n+(c*2), n+(c*3)[ Diferencia de los topes de las columnas con el mayor de todos los container.
         [n+(c*3), n+(c*4)[ Cantidad de pilas necesarias para ordenar los elementos en una columna de containers.
-        [n+(C*4] Movimiento con el que se llego a ese estado, en el caso de ser el estado inicial el valor es de -1.
+        [n+(C*4] Movimiento con el que se llego a ese estado.
+            En el caso de ser el estado inicial el valor es de ((c-1) * ) + 1.
 
 """
 

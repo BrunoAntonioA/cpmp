@@ -8,19 +8,20 @@ def import_data(path, path2):
     labels_data = labels.read()
     inputs = []
     outputs = []
-    pos = ""
-    sta = np.array([])
+    pos = 0
+    sta = np.array([], dtype="int")
     for i in train_data:
         if i != '.' and i != ',':
-            pos = pos + str(i)
+            pos = pos * 10 + int(i)
             continue
         if i == '.':
-            sta = np.append(sta, pos)
-            pos = ""
+            sta = np.append(sta, int(pos))
+            pos = 0
+            print("\nsta: ", sta)
             continue
         if i == ',':
-            sta = np.append(sta, pos)
-            pos = ""
+            sta = np.append(sta, int(pos))
+            pos = 0
             inputs.append(sta)
             sta = []
             continue
@@ -33,7 +34,7 @@ def import_data(path, path2):
         pos = pos + i
     train.close()
     labels.close()
-    return inputs, outputs
+    return np.array(inputs), outputs
 
 
 def filter_data(data, c, f, opt):
@@ -75,7 +76,6 @@ def filter_data(data, c, f, opt):
         transformed_data.append(new_data)
 
     return np.array(transformed_data), transformed_data[0].shape[0]
-
 
 
 
