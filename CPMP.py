@@ -397,6 +397,8 @@ def normalize_array(array):
 def generate_data_set(n1, n2, c, f, ds):
     d = open("data/states/train.txt", "a")
     l = open("data/states/trainlabel.txt", "a")
+    d.write(str(c))
+    d.write(str(f))
     inputs = []
     outputs = []
     for x in range(n1):
@@ -428,6 +430,8 @@ def generate_data_set(n1, n2, c, f, ds):
 
     d = open("data/states/test.txt", "a")
     l = open("data/states/testlabel.txt", "a")
+    d.write(str(c))
+    d.write(str(f))
     inputs = []
     outputs = []
     for x in range(n2):

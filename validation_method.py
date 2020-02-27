@@ -1,4 +1,3 @@
-import os
 import data as dt
 import numpy as np
 import CPMP as cpmp
@@ -6,7 +5,25 @@ import copy
 
 from tensorflow import keras
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import CPMP_NN as nn
+
+
+def generate_movements_array(columns):
+    movements_set = np.array([])
+    for i in range(columns):
+        for j in i:
+            if i == j:
+                continue
+            movements_set = np.append(movements_set, (i, j))
+    return movements_set
+
+
+def recognize_column_movement(movements_set, movement):
+    return np.where(movements_set == movement)
+
+
+def recognize_movement(movements_set, movement):
+    return movements_set[movement]
 
 
 def mayor(n, predict):
@@ -32,21 +49,6 @@ def validate_predict_data(predict_data, test_labels):
     return count/length
 
 
-def generate_movement(move):
-    if move == 0:
-        return 0, 1
-    if move == 1:
-        return 0, 2
-    if move == 2:
-        return 1, 0
-    if move == 3:
-        return 1, 2
-    if move == 4:
-        return 2, 0
-    if move == 5:
-        return 2, 1
-
-
 def opuesto(move):
     if move == 0:
         return 2
@@ -70,21 +72,6 @@ def movement(move, state):
     return 1
 
 
-def cargar_red(path, input_dim):
-
-    checkpoint_path = path
-    clf = keras.Sequential([
-        keras.layers.Flatten(input_shape=(input_dim,)),
-        keras.layers.Dense(64, activation='relu'),
-        keras.layers.Dense(128, activation='relu'),
-        keras.layers.Dense(64, activation='relu'),
-        keras.layers.Dense(6, activation='softmax')
-    ])
-    clf.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    # Loads the weights
-    clf.load_weights(checkpoint_path)
-    return clf
-
 
 def norm_eval(array, f):
     for i in range(len(array) - 1):
@@ -95,71 +82,79 @@ def norm_eval(array, f):
     return True
 
 
-def nn_solution(n, state, clf, input_dim):
-    x = state.transform_to_array()
-    if input_dim == 19:
-        x = np.append(x, state.group_values_array())
-    x = np.append(x, 0)
-    x = cpmp.normalize_array(x)
-    x = (np.expand_dims(x, 0))
-    count = 0
-    lastmove = 6
-    for i in range(3*n):
-        j = 5
-        count = count + 1
-        predict = clf.predict(x)
-        predict = np.array(predict)
-        predi = predict.argsort()
-        #state.print_yard()
-        #print("predict: ", predict)
-        #print("predi[j]: ", predi[0][j])
-        #print("----------")
-        if opuesto(lastmove) == predi[0][j]:
-            j = j - 1
-        while not movement(predi[0][j], state):
-            j = j - 1
-            if opuesto(lastmove) == predi[0][j]:
-                j = j - 1
-        lastmove = predi[0][j]
-        x = state.transform_to_array()
-        if input_dim == 19:
-            x = np.append(x, state.group_values_array())
-        x = np.append(x, lastmove)
-        x = cpmp.normalize_array(x)
-        x = (np.expand_dims(x, 0))
-        if state.eval_state():
-            #state.print_yard()
-            #print("---------------------------------------------")
-            return 1, count
-    return 0, 0
-
-
+# ESTE METODO ENTREGA LA CANTIDAD DE PASOS DE UNA SOLUCION OPTIMA
 def best_solution_depth(s):
     node = cpmp.CPMP_Node(s)
     node = cpmp.dlts_lds(node)
     return node.contar_profundidad()
 
 
-def testing_NN(n, path, input_dim):
-    clf = cargar_red(path, input_dim)
-    aciertos = 0
-    total = 0
+def transform_state(state, opt, last_move):
+    arr = cpmp.normalize_array(state.transform_to_array())
+    cp = copy.deepcopy(arr)
+    for x in opt:
+        if x == 0 and opt[x] == "1":
+            arr = np.append(arr, state.group_values_array())
+            continue
+        if x == 1 and opt[x] == "1":
+            arr = np.append(arr, state.get_base_differences(cp))
+            continue
+        if x == 2 and opt[x] == "1":
+            arr = np.append(arr, state.get_top_differences(cp))
+            continue
+        if x == 3 and opt[x] == "1":
+            arr = np.append(arr, state.get_ba(cp))
+    arr = np.append(arr, last_move)
+    arr = np.expand_dims(arr, last_move)
+    return arr
+
+
+# 'free_moves' REPRESENTA LA CANTIDAD DE PASOS EN QUE SE LLEGO A LA SOLUCION OPTIMA
+# 'n' ES EL MULTIPLICADOR DE 'free_moves' QUE REPRESENTA LA CANTIDAD DE MOVIMIENTOS MAXIMA PARA PODER RESOLVER EL ESTADO
+def nn_solver(free_moves, state, clf, columns, row):
+    movements = generate_movements_array(columns)
+    n = 3
+    # SE TRANSFORMA EL ESTADO
+    arr_state = transform_state(state, "1111", 0)
+    # CUENTA LA CANTIDAD DE MOVIMIENTOS QUE SE HICIERON PARA RESOLVER EL PROBLEMA
+    count = 0
+    lastmove = len(movements)
+    # SE INTENTA RESOLVER EL ESTADO EN 3*FREE_MOVES
+    for i in range(n*free_moves):
+        j = len(movements)-1
+        count = count + 1
+        # GENERO UN PASO CON LA RED
+        predict = clf.predict(arr_state)
+        predicted_step = predict.argsort()
+        # SE HACE EL MOVIMIENTO PRODUCIDO POR LA RED
+        # EN CASO DE QUE ESTE NO SEA VALIDO, GENERO EL SIGUIENTE PASO QUE PREDIJO LA RED
+        while not movement(predicted_step[0][j], state):
+            j = j - 1
+            if opuesto(lastmove) == predicted_step[0][j]:
+                j = j - 1
+        lastmove = predicted_step[0][j]
+        arr_state = transform_state(state, "1111", lastmove)
+        if state.eval_state():
+            return 1, count
+    return 0, 0
+
+
+# 'n' REPRESENTA LA CANTIDAD DE ESTADOS PARA PROBAR A LA RED
+def nn_test(n):
+    opt = "1111"
+    columns, rows = dt.get_state_dims("data/states/test.txt")
+    input_dim, output_dim = dt.get_nn_dims(columns, rows, opt)
+    clf = nn.load_network(input_dim, output_dim, opt)
+    total, success = 0, 0
     for x in range(n):
         total = total + 1
         s = cpmp.init(3, 5, 2)
         depth = best_solution_depth(s)
-        y = nn_solution(depth, s, clf, input_dim)
-        if y[0] == 1:
-            aciertos = aciertos + 1
-    print("termina ejecucion")
-    return total, aciertos
+        y = nn_solver(depth, s, clf, columns, rows)
+        if y == 1:
+            success = success + 1
+    return (success / total) * 100
 
-
-r1 = testing_NN(20, "NN_weights/NN_normalize_gv/nn_19_gv.ckpt", 19)
-r2 = testing_NN(20, "NN_weights/NN_normalize_gv/nn_16.ckpt", 16)
-
-print("r1: ", r1)
-print("r2: ", r2)
 
 
 
