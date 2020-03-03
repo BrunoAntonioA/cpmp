@@ -395,10 +395,11 @@ def normalize_array(array):
 
 
 def generate_data_set(n1, n2, c, f, ds):
-    d = open("data/states/train.txt", "a")
-    l = open("data/states/trainlabel.txt", "a")
-    d.write(str(c))
-    d.write(str(f))
+    d = open("data/states/test/train_f.txt", "a")
+    l = open("data/states/test/trainlabel_f.txt", "a")
+    d.write(str(c) + '/')
+    d.write(str(f) + '/')
+    d.write(str(ds) + '/')
     inputs = []
     outputs = []
     for x in range(n1):
@@ -428,10 +429,11 @@ def generate_data_set(n1, n2, c, f, ds):
     d.close()
     l.close()
 
-    d = open("data/states/test.txt", "a")
-    l = open("data/states/testlabel.txt", "a")
-    d.write(str(c))
-    d.write(str(f))
+    dt = open("data/states/test/test_f.txt", "a")
+    lt = open("data/states/test/testlabel_f.txt", "a")
+    dt.write(str(c)+'/')
+    dt.write(str(f)+'/')
+    dt.write(str(ds) + '/')
     inputs = []
     outputs = []
     for x in range(n2):
@@ -451,17 +453,25 @@ def generate_data_set(n1, n2, c, f, ds):
             if cont == 0:
                 cont = cont + 1
             else:
-                d.write(".")
-            d.write(str(z))
-        d.write(",")
+                dt.write(".")
+            dt.write(str(z))
+        dt.write(",")
         cont = 0
     for x in outputs:
-        l.write(str(x))
-        l.write(",")
-    d.close()
-    l.close()
+        lt.write(str(x))
+        lt.write(",")
+    dt.close()
+    lt.close()
 
 
+# DOCUMENTACION
+"""
+    Los atributos generados para cada estado son:
+        group_value_array: Indica la cantidad de contenedores desordenados de cada columna.
+        get_base_differences: Indica la diferencia del contenedor de la base con el mayor de todos los container.
+        get_top_differences: Indica la diferencia del contenedor de la base con el mayor de todos los container.
+        necessaries_stacks: Indica la cantidad de pilas necesarias para
+"""
 """
     El formato de guardado de los estados es el siguiente:
         Entre cada '.' se encuentra una posicion de un estado. 

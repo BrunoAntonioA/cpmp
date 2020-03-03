@@ -1,31 +1,37 @@
-import data as dt
+
 import numpy as np
 import CPMP as cpmp
 import copy
 
-from tensorflow import keras
-
+import data as dt
 import CPMP_NN as nn
 
 
+# METODO PARA GENERAR LOS POSIBLES MOVIMIENTOS PARA UN ESTADO DE 'columns' COLUMNAS
 def generate_movements_array(columns):
-    movements_set = np.array([])
+    movements_set = []
     for i in range(columns):
-        for j in i:
+        for j in range(columns):
             if i == j:
                 continue
-            movements_set = np.append(movements_set, (i, j))
+            movements_set.append((i, j))
     return movements_set
 
 
-def recognize_column_movement(movements_set, movement):
-    return np.where(movements_set == movement)
+# METODO PARA TRANSFORMAR UN MOVIMIENTO EN FORMATO TUPLA A FORMATO DE UN ENTERO
+def recognize_tuple_movement(movements_set, tuple):
+    for x in range(len(movements_set)):
+        if movements_set[x] == tuple:
+            return x
+    return "error tupla no existe"
 
 
-def recognize_movement(movements_set, movement):
-    return movements_set[movement]
+# METODO PARA TRANSFORMAR UN MOVIMIENTO EN FORMATO TUPLA A FORMATO DE UN ENTERO
+def recognize_movement(movements_set, mov):
+    return movements_set[mov]
 
 
+# METODO PARA ENCONTRAR EL INDICE DEL 'n'-ESIMO MAYOR NUMERO EN UN ARREGLO
 def mayor(n, predict):
     x = np.sort(predict)
     print("n: ", n)
@@ -35,44 +41,15 @@ def mayor(n, predict):
     return index[0][0]
 
 
-def validate_predict_data(predict_data, test_labels):
-    length = len(predict_data)
-    count = 0
-    for i in range(length):
-        if mayor(predict_data[i]) == test_labels[i]:
-            count = count + 1
-
-    print("Total de datos = ", length)
-    print("Acertados = ", count)
-    print("Porcentaje de acierto = ", count/length * 100, "%")
-
-    return count/length
-
-
-def opuesto(move):
-    if move == 0:
-        return 2
-    if move == 1:
-        return 4
-    if move == 2:
-        return 0
-    if move == 3:
-        return 5
-    if move == 4:
-        return 1
-    if move == 5:
-        return 3
-    return 6
-
-
-def movement(move, state):
-    tpl = generate_movement(move)
+# GENERA UN MOVIMIENTO PARA UN ESTADO, EN CASO DE NO PODER REALIZARSE RETORNA 0
+def movement(move, state, movements):
+    tpl = recognize_movement(movements, move)
     if not state.movement(tpl[0], tpl[1]):
         return 0
     return 1
 
 
-
+# EVALUA UN ESTADO EN FORMATO DE ARRAY
 def norm_eval(array, f):
     for i in range(len(array) - 1):
         if (i+1) % f == 0:
@@ -89,33 +66,40 @@ def best_solution_depth(s):
     return node.contar_profundidad()
 
 
+# TRANSFORMA UN ESTADO EN FORMATO CPMP A UN ARRAY, AGREGA LOS ATRIBUTOS DE MANERA QUE PUEDA SER UTILIZADO POR LA RED
+# EL PARAMETRO 'opt' ES LA OPCION PARA SABER QUE ATRIBUTOS SE DESEAN AGREGAR
+# 'last_move' ES EL PASO DEL ESTADO DEL QUE VIENE. SE AGREGA COMO ATRIBUTO AL ESTADO
 def transform_state(state, opt, last_move):
     arr = cpmp.normalize_array(state.transform_to_array())
     cp = copy.deepcopy(arr)
-    for x in opt:
+    for x in range(len(opt)):
         if x == 0 and opt[x] == "1":
             arr = np.append(arr, state.group_values_array())
             continue
         if x == 1 and opt[x] == "1":
-            arr = np.append(arr, state.get_base_differences(cp))
+            arr = np.append(arr, state.get_base_differences_from_normalize(cp))
             continue
         if x == 2 and opt[x] == "1":
-            arr = np.append(arr, state.get_top_differences(cp))
+            arr = np.append(arr, state.get_top_differences_from_normalize(cp))
             continue
         if x == 3 and opt[x] == "1":
-            arr = np.append(arr, state.get_ba(cp))
+            arr = np.append(arr, state.array_pilas_necesarias())
+            continue
     arr = np.append(arr, last_move)
-    arr = np.expand_dims(arr, last_move)
+    arr = np.expand_dims(arr, 0)
     return arr
 
 
+# ESTE METODO RESUELVE UN ESTADO 'state' de 'columns' COLUMNAS EN AL MENOS 'free_moves' PASOS
+# UTILIZA LA RED 'clf' PARA PREDECIR MOVIMIENTOS
 # 'free_moves' REPRESENTA LA CANTIDAD DE PASOS EN QUE SE LLEGO A LA SOLUCION OPTIMA
 # 'n' ES EL MULTIPLICADOR DE 'free_moves' QUE REPRESENTA LA CANTIDAD DE MOVIMIENTOS MAXIMA PARA PODER RESOLVER EL ESTADO
-def nn_solver(free_moves, state, clf, columns, row):
-    movements = generate_movements_array(columns)
+# EL PARAMETRO 'opt' ES LA OPCION PARA SABER QUE ATRIBUTOS SE DESEAN AGREGAR
+def nn_solver(free_moves, state, clf, columns, opt):
+    movements = generate_movements_array(int(columns))
     n = 3
     # SE TRANSFORMA EL ESTADO
-    arr_state = transform_state(state, "1111", 0)
+    arr_state = transform_state(state, opt, 0)
     # CUENTA LA CANTIDAD DE MOVIMIENTOS QUE SE HICIERON PARA RESOLVER EL PROBLEMA
     count = 0
     lastmove = len(movements)
@@ -128,10 +112,10 @@ def nn_solver(free_moves, state, clf, columns, row):
         predicted_step = predict.argsort()
         # SE HACE EL MOVIMIENTO PRODUCIDO POR LA RED
         # EN CASO DE QUE ESTE NO SEA VALIDO, GENERO EL SIGUIENTE PASO QUE PREDIJO LA RED
-        while not movement(predicted_step[0][j], state):
+        print("\n")
+        state.print_yard()
+        while not movement(predicted_step[0][j], state, movements):
             j = j - 1
-            if opuesto(lastmove) == predicted_step[0][j]:
-                j = j - 1
         lastmove = predicted_step[0][j]
         arr_state = transform_state(state, "1111", lastmove)
         if state.eval_state():
@@ -140,21 +124,27 @@ def nn_solver(free_moves, state, clf, columns, row):
 
 
 # 'n' REPRESENTA LA CANTIDAD DE ESTADOS PARA PROBAR A LA RED
-def nn_test(n):
-    opt = "1111"
-    columns, rows = dt.get_state_dims("data/states/test.txt")
+# 'opt' REPRESENTA EL STRING "0000" DONDE SE RELLENA CON 1 LOS ATRIBUTOS DESEADOS. ESTOS FUERON DESCRITOS EN EL ARCHIVO
+# "data.py"
+def nn_test(n, opt):
+    columns, rows, ds = dt.get_state_dims("data/states/test/test_f.txt")
     input_dim, output_dim = dt.get_nn_dims(columns, rows, opt)
     clf = nn.load_network(input_dim, output_dim, opt)
     total, success = 0, 0
     for x in range(n):
         total = total + 1
-        s = cpmp.init(3, 5, 2)
+        s = cpmp.init(columns, rows, ds)
         depth = best_solution_depth(s)
-        y = nn_solver(depth, s, clf, columns, rows)
-        if y == 1:
+        y = nn_solver(depth, s, clf, columns, opt)
+        if y[0] == 1:
+            print("success")
             success = success + 1
-    return (success / total) * 100
+        print("\n\n---------------------")
+    return success
 
+
+# EJEMPLO DE EJECUCION DE VALIDACION
+print(nn_test(10, "1111"))
 
 
 

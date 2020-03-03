@@ -9,7 +9,8 @@ from tensorflow import keras
 import numpy as np
 
 
-# EL PARAMETRO 'opt' INDICA CON UN 1 SI ES QUE QUIERE CARGAR LOS DATOS, CON OTRO VALOR NO LO HARA
+# EL PARAMETRO 'opt' INDICA CON UN 1 SI ES QUE QUIERE CARGAR LOS DATOS ENTRENADOS POR LA RED
+# EN LA RUTA DECLARADA EN LA LINEA 28 CON LA VARIABLE 'check_point_path', CON UN VALOR DISTINTO A 1 NO SE CARGARA
 def load_network(input_dim, output_dim, *opt):
     # CREANDO Y COMPILANDO EL MODELO DE LA RED
     clf = keras.Sequential([
@@ -28,11 +29,12 @@ def load_network(input_dim, output_dim, *opt):
     return clf
 
 
+# METODO PARA CARGAR LOS DATOS DE ENTRENAMIENTO DE LA RED
 def load_data():
-    test_path = "data/states/test.txt";
-    test_labels_path = "data/states/testlabel.txt";
-    train_path = "data/states/train.txt";
-    train_labels_path = "data/states/trainlabel.txt";
+    test_path = "data/states/test.txt"
+    test_labels_path = "data/states/testlabel.txt"
+    train_path = "data/states/train.txt"
+    train_labels_path = "data/states/trainlabel.txt"
     train_data, train_labels, c = dt.import_data(train_path, train_labels_path)
     test_data, test_labels, f = dt.import_data(test_path, test_labels_path)
     input_dim = train_data[0].shape[0]
@@ -42,11 +44,14 @@ def load_data():
            np.array(test_labels, dtype=int), input_dim, output_dim
 
 
+# METODO PARA CARGAR LOS DATOS DE ENTRENAMIENTO DE LA RED CON ATRIBUTOS ESPECIFICOS
+# 'opt' REPRESENTA EL STRING "0000" DONDE SE RELLENA CON 1 LOS ATRIBUTOS DESEADOS. ESTOS FUERON DESCRITOS EN EL ARCHIVO
+# data.py
 def load_filter_data(opt):
-    test_path = "data/states/test.txt";
-    test_labels_path = "data/states/testlabel.txt";
-    train_path = "data/states/train.txt";
-    train_labels_path = "data/states/trainlabel.txt";
+    test_path = "data/states/test/test_f.txt"
+    test_labels_path = "data/states/test/testlabel_f.txt"
+    train_path = "data/states/test/train_f.txt"
+    train_labels_path = "data/states/test/trainlabel_f.txt"
     train_data, train_labels, c, f = dt.import_data(train_path, train_labels_path)
     test_data, test_labels, c, f = dt.import_data(test_path, test_labels_path)
 
@@ -56,7 +61,8 @@ def load_filter_data(opt):
         np.array(test_labels, dtype=int), input_dim, output_dim
 
 
-def train_network():
+# SE ENTRENA LA RED NEURONAL, DEFINIDA CON EL MODELO EN EL METODO "load_network()"
+def train_network(opt):
     # DEFINIR RUTA DE SALVACION DE DATOS
     checkpoint_path = "data/NN_weights/nn_training_data.ckpt"
 
@@ -68,7 +74,7 @@ def train_network():
 
     # CARGANDO DATOS DE ENTRENAMIENTO FILTRADOS
     # MODIFICAR PARAMETRO STRING PARA ESCOGER LAS OPCIONES. MAYOR INFORMACION EN EL ARCHIVO data.py
-    train_data, train_labels, test_data, test_labels, input_dim, output_dim = load_filter_data("1111")
+    train_data, train_labels, test_data, test_labels, input_dim, output_dim = load_filter_data(opt)
 
     # CARGAR RED
     clf = load_network(input_dim, output_dim)
@@ -88,13 +94,5 @@ def train_network():
     print('\nTest accuracy2:', test_acc)
 
 
-def testing_network_from_tensorflow_colab():
-    fashion_mnist = keras.datasets.fashion_mnist
-    (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-    input_dim = (28, 28)
-    clf = load_network(input_dim)
-    clf.fit(train_images, train_labels, epochs=10)
-    test_loss, test_acc = clf.evaluate(test_images, test_labels, verbose=2)
-    print('\nTest accuracy:', test_acc)
-
+#train_network("1111")
 
