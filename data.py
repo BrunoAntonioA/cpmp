@@ -124,7 +124,6 @@ def get_state_dims(path):
     ds = 0
     column = 0
     for x in train_data:
-        print("x: ", x)
         if cont == 0:
             if x == '/':
                 cont = cont + 1

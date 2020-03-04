@@ -19,31 +19,20 @@ def generate_movements_array(columns):
 
 
 # METODO PARA TRANSFORMAR UN MOVIMIENTO EN FORMATO TUPLA A FORMATO DE UN ENTERO
-def recognize_tuple_movement(movements_set, tuple):
+def tuple_to_move(movements_set, tuple):
     for x in range(len(movements_set)):
         if movements_set[x] == tuple:
             return x
-    return "error tupla no existe"
 
 
 # METODO PARA TRANSFORMAR UN MOVIMIENTO EN FORMATO TUPLA A FORMATO DE UN ENTERO
-def recognize_movement(movements_set, mov):
+def move_to_tuple(movements_set, mov):
     return movements_set[mov]
-
-
-# METODO PARA ENCONTRAR EL INDICE DEL 'n'-ESIMO MAYOR NUMERO EN UN ARREGLO
-def mayor(n, predict):
-    x = np.sort(predict)
-    print("n: ", n)
-    print("x[0]: ", x[0])
-    value = x[0][n]
-    index = np.where(predict == value)
-    return index[0][0]
 
 
 # GENERA UN MOVIMIENTO PARA UN ESTADO, EN CASO DE NO PODER REALIZARSE RETORNA 0
 def movement(move, state, movements):
-    tpl = recognize_movement(movements, move)
+    tpl = move_to_tuple(movements, move)
     if not state.movement(tpl[0], tpl[1]):
         return 0
     return 1
@@ -64,6 +53,21 @@ def best_solution_depth(s):
     node = cpmp.CPMP_Node(s)
     node = cpmp.dlts_lds(node)
     return node.contar_profundidad()
+
+
+def opuesto(movements, mov):
+    tuple = move_to_tuple(movements, mov)
+    for x in range(len(movements)):
+        if movements[x] == (tuple[1], tuple[0]):
+            opuesto = movements[x]
+            mov_opuesto = tuple_to_move(movements, opuesto)
+            return mov_opuesto
+
+
+def index_mayor(mayor, arreglo):
+    for i in range(len(arreglo)):
+        if mayor == arreglo[i]:
+            return i
 
 
 # TRANSFORMA UN ESTADO EN FORMATO CPMP A UN ARRAY, AGREGA LOS ATRIBUTOS DE MANERA QUE PUEDA SER UTILIZADO POR LA RED
@@ -102,21 +106,21 @@ def nn_solver(free_moves, state, clf, columns, opt):
     arr_state = transform_state(state, opt, 0)
     # CUENTA LA CANTIDAD DE MOVIMIENTOS QUE SE HICIERON PARA RESOLVER EL PROBLEMA
     count = 0
-    lastmove = len(movements)
     # SE INTENTA RESOLVER EL ESTADO EN 3*FREE_MOVES
     for i in range(n*free_moves):
-        j = len(movements)-1
+        j = len(movements) - 1
         count = count + 1
         # GENERO UN PASO CON LA RED
         predict = clf.predict(arr_state)
-        predicted_step = predict.argsort()
+        order_predict = np.sort(predict[0])
+        step = index_mayor(order_predict[j], predict[0])
+        lastmove = step
         # SE HACE EL MOVIMIENTO PRODUCIDO POR LA RED
         # EN CASO DE QUE ESTE NO SEA VALIDO, GENERO EL SIGUIENTE PASO QUE PREDIJO LA RED
-        print("\n")
-        state.print_yard()
-        while not movement(predicted_step[0][j], state, movements):
+        while not movement(step, state, movements) or opuesto(movements, lastmove) == step:
             j = j - 1
-        lastmove = predicted_step[0][j]
+            step = index_mayor(order_predict[j], predict[0])
+        lastmove = step
         arr_state = transform_state(state, "1111", lastmove)
         if state.eval_state():
             return 1, count
@@ -139,12 +143,9 @@ def nn_test(n, opt):
         if y[0] == 1:
             print("success")
             success = success + 1
-        print("\n\n---------------------")
-    return success
+    return "success: "+str(success), "total: "+str(total)
 
 
-# EJEMPLO DE EJECUCION DE VALIDACION
-print(nn_test(10, "1111"))
 
 
 

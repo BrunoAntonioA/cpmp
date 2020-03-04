@@ -94,5 +94,3 @@ def train_network(opt):
     print('\nTest accuracy2:', test_acc)
 
 
-#train_network("1111")
-

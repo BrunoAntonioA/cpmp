@@ -50,7 +50,7 @@ class Yard:
             # hago un pop a c1 y con el mismo elemento que borré hago un append a c2
             self.container_array[c2].stack.append(self.container_array[c1].stack.pop())
         else:
-            print("No se puede realizar este movimiento. La columna ", c1 + 1, " no tiene elementos o la columna ",c2 + 2, " está llena")
+            #print("No se puede realizar este movimiento. La columna ", c1 + 1, " no tiene elementos o la columna ",c2 + 2, " está llena")
             return 0
         self.container_array[c1].get_group_value()
         self.container_array[c2].get_group_value()
@@ -392,8 +392,6 @@ def normalize_array(array):
 # c cantidad de columnas de las instancias a generar
 # f cantidad de filas de las instancias a generar
 # ds cantidad de filas superiores en blanco que se desean sobreponer
-
-
 def generate_data_set(n1, n2, c, f, ds):
     d = open("data/states/test/train_f.txt", "a")
     l = open("data/states/test/trainlabel_f.txt", "a")
@@ -493,4 +491,5 @@ def generate_data_set(n1, n2, c, f, ds):
 
 """
 
-generate_data_set(5, 5, 4, 4, 2)
+
+generate_data_set(4500, 9000, 4, 4, 2)
