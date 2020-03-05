@@ -492,4 +492,4 @@ def generate_data_set(n1, n2, c, f, ds):
 """
 
 
-generate_data_set(4500, 9000, 4, 4, 2)
+#generate_data_set(4500, 9000, 4, 4, 2)

@@ -121,7 +121,7 @@ def nn_solver(free_moves, state, clf, columns, opt):
             j = j - 1
             step = index_mayor(order_predict[j], predict[0])
         lastmove = step
-        arr_state = transform_state(state, "1111", lastmove)
+        arr_state = transform_state(state, opt, lastmove)
         if state.eval_state():
             return 1, count
     return 0, 0
@@ -146,6 +146,9 @@ def nn_test(n, opt):
     return "success: "+str(success), "total: "+str(total)
 
 
+opt = "1010"
+nn.train_network(opt)
+print(nn_test(100, opt))
 
 
 

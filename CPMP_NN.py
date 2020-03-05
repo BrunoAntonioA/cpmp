@@ -80,7 +80,7 @@ def train_network(opt):
     clf = load_network(input_dim, output_dim)
 
     # SE ENTRENA A LA RED
-    clf.fit(train_data, train_labels, epochs=150, callbacks=[cp_callback], validation_data=(test_data, test_labels))
+    clf.fit(train_data, train_labels, epochs=50, callbacks=[cp_callback], validation_data=(test_data, test_labels))
 
     # EVALUA EL ENTRENAMIENTO
     test_loss, test_acc = clf.evaluate(test_data, test_labels, verbose=2)
